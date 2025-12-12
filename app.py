@@ -207,5 +207,11 @@ def query():
         flash(f'Word "{word}" not found in vocabulary.')
         return redirect(url_for('explore', model_path=model_path))
 
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == "__main__":
+    # For local testing
+    app.run(host="0.0.0.0", port=7860, debug=False)
+else:
+    # For Hugging Face Spaces (gunicorn)
+    import gunicorn.app.base
+    # This allows gunicorn to import your app
+    pass
