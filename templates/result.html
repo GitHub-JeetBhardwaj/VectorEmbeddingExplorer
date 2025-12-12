@@ -1,0 +1,337 @@
+<!-- templates/result.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Semantic Results • "{{ word }}"</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <style>
+        :root {
+            --gray-50: #fafafa;
+            --gray-100: #f5f5f5;
+            --gray-150: #eeeeee;
+            --gray-200: #e0e0e0;
+            --gray-300: #c2c2c2;
+            --gray-400: #9e9e9e;
+            --gray-500: #757575;
+            --gray-600: #5a5a5a;
+            --gray-700: #424242;
+            --gray-800: #2e2e2e;
+            --gray-900: #1a1a1a;
+            --gray-950: #101010;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--gray-50) 0%, var(--gray-100) 50%, var(--gray-150) 100%);
+            min-height: 100vh;
+            font-family: 'Inter', system-ui, sans-serif;
+            color: var(--gray-800);
+            padding-bottom: 4rem;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background: 
+                radial-gradient(circle at 20px 20px, var(--gray-300) 1px, transparent 1px),
+                radial-gradient(circle at 80px 80px, var(--gray-300) 1px, transparent 1px);
+            background-size: 100px 100px;
+            opacity: 0.06;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .container { max-width: 1480px; margin: 2rem auto; padding: 0 1rem; }
+
+        /* Header */
+        .page-header {
+            background: white;
+            border-radius: 18px;
+            padding: 2rem;
+            margin-bottom: 2.5rem;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.07);
+            border: 1px solid var(--gray-200);
+            text-align: center;
+        }
+
+        .query-word {
+            font-size: 3.2rem;
+            font-weight: 800;
+            color: var(--gray-950);
+            letter-spacing: -1.5px;
+            margin: 0.5rem 0;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .stat {
+            background: var(--gray-100);
+            padding: 0.8rem 1.6rem;
+            border-radius: 50px;
+            font-weight: 600;
+            color: var(--gray-800);
+            border: 1px solid var(--gray-300);
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 18px;
+            box-shadow: 0 10px 35px rgba(0,0,0,0.08);
+            border: 1px solid var(--gray-200);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .card-header {
+            background: var(--gray-50);
+            padding: 1.6rem 2rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .card-title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        /* Neighbors Grid */
+        .neighbors-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 1.2rem;
+            padding: 1.5rem;
+        }
+
+        .neighbor-card {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: 14px;
+            padding: 1.4rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .neighbor-card:hover {
+            background: var(--gray-100);
+            transform: translateY(-6px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .neighbor-card.highlighted {
+            background: var(--gray-150);
+            border-color: var(--gray-700);
+        }
+
+        .rank {
+            position: absolute;
+            top: -10px;
+            right: 12px;
+            background: var(--gray-900);
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .neighbor-word {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin: 0.5rem 0;
+        }
+
+        .similarity {
+            font-weight: 600;
+            color: var(--gray-700);
+        }
+
+        .bar {
+            height: 8px;
+            background: var(--gray-200);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 0.8rem;
+        }
+
+        .fill {
+            height: 100%;
+            background: var(--gray-800);
+            border-radius: 4px;
+            transition: width 1.2s ease;
+        }
+
+        /* 3D PLOT — THIS IS THE FIX */
+        .plot-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.1);
+        }
+
+        #plot {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .plot-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(255,255,255,0.97);
+            backdrop-filter: blur(5px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 100;
+        }
+
+        .spinner {
+            width: 70px;
+            height: 70px;
+            border: 6px solid var(--gray-200);
+            border-top-color: var(--gray-900);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 3rem 1rem 2rem;
+            color: var(--gray-600);
+            border-top: 1px solid var(--gray-200);
+            margin-top: 4rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+
+        <!-- Header -->
+        <div class="page-header">
+            <h1 style="font-size: 2rem; color: var(--gray-900); margin-bottom: 1rem;">
+                Semantic Neighbors for
+            </h1>
+            <div class="query-word">"{{ word }}"</div>
+            <div class="stats">
+                <div class="stat">Top {{ similar|length }} Similar Words</div>
+                <div class="stat">Best Match: {{ "%.3f"|format(similar[0][1] if similar else 0) }}</div>
+            </div>
+        </div>
+
+        <div class="row g-5">
+
+            <!-- Left: Similar Words -->
+            <div class="col-lg-5">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Top Semantic Matches</h2>
+                    </div>
+                    <div style="position: relative;">
+                        <div class="neighbors-grid">
+                            {% for w, sim in similar %}
+                            <div class="neighbor-card {{ 'highlighted' if loop.index == 1 else '' }}">
+                                <div class="rank">{{ loop.index }}</div>
+                                <div class="neighbor-word">{{ w }}</div>
+                                <div class="similarity">{{ "%.4f"|format(sim) }}</div>
+                                <div class="bar">
+                                    <div class="fill" style="width: {{ (sim * 100)|round|int }}%"></div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: 3D Plot -->
+            <div class="col-lg-7">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h2 class="card-title">3D Embedding Space</h2>
+                        <small style="color: var(--gray-600);">Query word & neighbors highlighted</small>
+                    </div>
+
+                    <div class="plot-container">
+                        <!-- THIS IS THE ONLY PLACE PLOTLY SHOULD BE -->
+                        <div id="plot">
+                            {{ highlight_plot_html | safe }}
+                        </div>
+
+                        <!-- Loading overlay (hidden by default) -->
+                        <div class="plot-overlay" id="overlay">
+                            <div class="spinner"></div>
+                            <div style="margin-top: 1.5rem; font-size: 1.2rem; font-weight: 600; color: var(--gray-800);">
+                                Loading 3D visualization...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="footer">
+            <p>Word Embedding Explorer • Private • In-Memory Processing</p>
+            <p style="margin-top: 1rem;">
+                <a href="{{ url_for('explore', model_path=request.args.get('model_path')) }}" style="color: var(--gray-700); text-decoration: underline;">
+                    ← Back to Explorer
+                </a>
+                <span style="margin: 0 1rem;">•</span>
+                <a href="{{ url_for('index') }}" style="color: var(--gray-700); text-decoration: underline;">
+                    New Analysis →
+                </a>
+            </p>
+        </div>
+
+    </div>
+
+    <!-- Plotly Latest Stable -->
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Auto-resize plot when window changes
+            window.addEventListener('resize', () => {
+                const plot = document.getElementById('plot');
+                if (plot && plot.data) {
+                    Plotly.Plots.resize(plot);
+                }
+            });
+
+            // Optional: Auto-center after load
+            setTimeout(() => {
+                const plot = document.getElementById('plot');
+                if (plot && plot.data) {
+                    Plotly.relayout(plot, {
+                        'scene.camera.eye': {x: 1.4, y: 1.4, z: 1.4}
+                    });
+                }
+            }, 800);
+        });
+    </script>
+</body>
+</html>

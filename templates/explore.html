@@ -1,0 +1,404 @@
+<!-- templates/explore.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Embedding Explorer • {{ pdf_filename }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --gray-50: #fafafa;
+            --gray-100: #f5f5f5;
+            --gray-150: #eeeeee;
+            --gray-200: #e0e0e0;
+            --gray-300: #c2c2c2;
+            --gray-400: #9e9e9e;
+            --gray-500: #757575;
+            --gray-600: #5a5a5a;
+            --gray-700: #424242;
+            --gray-800: #2e2e2e;
+            --gray-900: #1a1a1a;
+            --gray-950: #101010;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--gray-50) 0%, var(--gray-100) 50%, var(--gray-150) 100%);
+            min-height: 100vh;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            color: var(--gray-800);
+            padding-bottom: 3rem;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background-image: 
+                linear-gradient(var(--gray-200) 1px, transparent 1px),
+                linear-gradient(90deg, var(--gray-200) 1px, transparent 1px);
+            background-size: 50px 50px;
+            opacity: 0.04;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .container { max-width: 1480px; margin: 2rem auto; padding: 0 1rem; }
+
+        .nav-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid var(--gray-200);
+        }
+
+        .document-info {
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+        }
+
+        .document-icon {
+            width: 56px; height: 56px;
+            background: var(--gray-100);
+            border-radius: 14px;
+            display: grid;
+            place-items: center;
+            border: 1px solid var(--gray-300);
+        }
+
+        .document-icon i { font-size: 1.8rem; color: var(--gray-700); }
+
+        .document-details h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin: 0;
+        }
+
+        .document-details p {
+            margin: 0.3rem 0 0;
+            color: var(--gray-600);
+            font-size: 0.95rem;
+        }
+
+        .back-button {
+            background: white;
+            border: 1.5px solid var(--gray-300);
+            color: var(--gray-700);
+            padding: 0.65rem 1.4rem;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .back-button:hover {
+            background: var(--gray-100);
+            border-color: var(--gray-600);
+            color: var(--gray-900);
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.07);
+            border: 1px solid var(--gray-200);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .card-header {
+            background: var(--gray-50);
+            border-bottom: 1px solid var(--gray-200);
+            padding: 1.5rem 2rem;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .card-body { padding: 2rem; }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--gray-800);
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.8rem;
+        }
+
+        .form-select {
+            padding: 1rem 1.2rem;
+            border: 2px solid var(--gray-300);
+            border-radius: 12px;
+            font-size: 1.05rem;
+            background: white;
+        }
+
+        .form-select:focus {
+            border-color: var(--gray-600);
+            box-shadow: 0 0 0 4px rgba(90,90,90,0.12);
+        }
+
+        .btn-query {
+            background: var(--gray-900);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 1.1rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            width: 100%;
+            margin-top: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-query:hover { background: var(--gray-800); transform: translateY(-2px); }
+        .btn-query:disabled { background: var(--gray-500); cursor: not-allowed; }
+
+        /* 3D PLOT — THE MOST IMPORTANT PART */
+        .plot-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: white;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        #plot {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .plot-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(255,255,255,0.96);
+            backdrop-filter: blur(6px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 100;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid var(--gray-200);
+            border-top-color: var(--gray-900);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .stat-item {
+            background: var(--gray-50);
+            padding: 1.2rem;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid var(--gray-200);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--gray-900);
+        }
+
+        .stat-label {
+            color: var(--gray-600);
+            font-size: 0.9rem;
+            margin-top: 0.4rem;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 2.5rem 1rem 1rem;
+            color: var(--gray-600);
+            font-size: 0.95rem;
+            border-top: 1px solid var(--gray-200);
+            margin-top: 3rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+
+        <!-- Navigation -->
+        <div class="nav-card">
+            <div class="document-info">
+                <div class="document-icon">
+                    <i class="fas fa-file-pdf"></i>
+                </div>
+                <div class="document-details">
+                    <h2>Word Embedding Explorer</h2>
+                    <p>Document: <strong>{{ pdf_filename }}</strong></p>
+                </div>
+            </div>
+            <a href="{{ url_for('index') }}" class="back-button">
+                Back to Upload
+            </a>
+        </div>
+
+        <div class="row g-4">
+
+            <!-- Left Panel -->
+            <div class="col-lg-4">
+
+                <!-- Query Form -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Query Similar Words</h2>
+                    </div>
+                    <div class="card-body">
+                        <form action="{{ url_for('query', model_path=request.args.get('model_path')) }}" method="post" id="queryForm">
+                            <div class="mb-4">
+                                <label for="word" class="form-label">Select a word</label>
+                                <select class="form-select" id="word" name="word" required>
+                                    <option value="" disabled selected>Select a word from document...</option>
+                                    {% for w in words %}
+                                        <option value="{{ w }}">{{ w }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <button type="submit" class="btn-query" id="queryBtn">
+                                Find Similar Words
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Stats -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h2 class="card-title">Model Info</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-value">{{ words|length }}</div>
+                                <div class="stat-label">Unique Words</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">100</div>
+                                <div class="stat-label">Dimensions</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">PCA</div>
+                                <div class="stat-label">3D Projection</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Panel: 3D Visualization -->
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">3D Semantic Space</h2>
+                    </div>
+                    <div class="card-body p-0">
+
+                        <div class="plot-wrapper">
+                            <!-- Plotly plot goes here -->
+                            <div id="plot">
+                                {{ full_plot_html | safe }}
+                            </div>
+
+                            <!-- Loading overlay -->
+                            <div class="plot-overlay" id="plotOverlay">
+                                <div class="spinner"></div>
+                                <div style="margin-top: 1.5rem; font-weight: 600; color: var(--gray-800);">
+                                    Updating visualization...
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Optional: Show similar words below plot after query -->
+                        {% if similar_words %}
+                        <div style="padding: 2rem; background: var(--gray-50); border-top: 1px solid var(--gray-200);">
+                            <h4 style="margin: 0 0 1.5rem; color: var(--gray-900);">
+                                Top similar words to "{{ query_word }}"
+                            </h4>
+                            <div class="row row-cols-2 row-cols-md-3 row-cols-lg-5 g-3">
+                                {% for word, sim in similar_words %}
+                                <div class="col">
+                                    <div style="background: white; padding: 1rem; border-radius: 10px; text-align: center; border: 1px solid var(--gray-200);">
+                                        <div style="font-weight: 600; color: var(--gray-900);">{{ word }}</div>
+                                        <div style="font-size: 0.9rem; color: var(--gray-600); margin-top: 0.4rem;">
+                                            {{ "%.3f"|format(sim) }}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="footer">
+            Word Embedding Explorer • All processing done in memory • No data stored
+        </div>
+
+    </div>
+
+    <!-- Plotly JS -->
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const overlay = document.getElementById('plotOverlay');
+            const form = document.getElementById('queryForm');
+            const btn = document.getElementById('queryBtn');
+
+            form.addEventListener('submit', () => {
+                btn.disabled = true;
+                btn.innerHTML = 'Processing...';
+                overlay.style.display = 'flex';
+            });
+
+            // Auto-resize plot on window resize
+            window.addEventListener('resize', () => {
+                Plotly.Plots.resize('plot');
+            });
+        });
+    </script>
+</body>
+</html>

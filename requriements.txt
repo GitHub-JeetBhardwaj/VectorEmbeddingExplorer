@@ -1,0 +1,10 @@
+Flask
+gunicorn
+PyPDF2
+nltk
+gensim
+scikit-learn
+plotly
+pandas
+kaleido
+Werkzeug
