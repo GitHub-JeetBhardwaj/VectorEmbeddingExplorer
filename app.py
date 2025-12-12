@@ -23,8 +23,8 @@ app.config['ALLOWED_EXTENSIONS'] = {'pdf'}
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # Download NLTK data
-nltk.download('stopwords', quiet=True)
-nltk.download('punkt', quiet=True)
+# nltk.download('stopwords', quiet=True)
+# nltk.download('punkt', quiet=True)
 stop_words = set(stopwords.words('english'))
 
 # Setup logging
@@ -215,3 +215,4 @@ else:
     import gunicorn.app.base
     # This allows gunicorn to import your app
     pass
+
